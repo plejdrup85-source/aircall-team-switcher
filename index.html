@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="no">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Aircall Team Switch</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 40px; }
+      .card { max-width: 520px; padding: 24px; border: 1px solid #ddd; border-radius: 12px; }
+      h1 { margin: 0 0 6px 0; font-size: 22px; }
+      p { margin: 0 0 16px 0; color: #333; }
+      .row { display: flex; gap: 12px; }
+      button {
+        flex: 1;
+        padding: 14px 12px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      button:disabled { opacity: 0.6; cursor: not-allowed; }
+      .status { margin-top: 14px; min-height: 22px; }
+      .muted { color: #666; font-size: 13px; margin-top: 14px; }
+      code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Velg hva Nina jobber med</h1>
+      <p>Trykk én knapp for å bytte team-medlemskap i Aircall.</p>
+
+      <div class="row">
+        <button id="btn-tech" onclick="switchMode('teknisk')">🔧 Jobb Teknisk</button>
+        <button id="btn-cs" onclick="switchMode('kundeservice')">💬 Jobb Kundeservice</button>
+      </div>
+
+      <div class="status" id="status"></div>
+
+      <div class="muted">
+        (Teknisk team: <code>{{ tech_team }}</code> • Kundeservice team: <code>{{ cs_team }}</code> • User: <code>{{ nina_user }}</code>)
+      </div>
+    </div>
+
+    <script>
+      const statusEl = document.getElementById("status");
+      const btnTech = document.getElementById("btn-tech");
+      const btnCS = document.getElementById("btn-cs");
+
+      function setBusy(busy) {
+        btnTech.disabled = busy;
+        btnCS.disabled = busy;
+      }
+
+      async function switchMode(mode) {
+        setBusy(true);
+        statusEl.textContent = "Bytter...";
+
+        try {
+          const res = await fetch(`/switch/${mode}`, { method: "POST" });
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok) {
+            statusEl.textContent = `Feil: ${data.detail || res.statusText}`;
+            setBusy(false);
+            return;
+          }
+
+          statusEl.textContent =
+            mode === "teknisk"
+              ? "✅ Ferdig! Nina er nå satt til Teknisk."
+              : "✅ Ferdig! Nina er nå satt til Kundeservice.";
+        } catch (e) {
+          statusEl.textContent = `Feil: ${e}`;
+        } finally {
+          setBusy(false);
+        }
+      }
+    </script>
+  </body>
+</html>
